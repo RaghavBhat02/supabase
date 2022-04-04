@@ -283,3 +283,32 @@ test('bug: nav backwards with params change results in ui changing', async () =>
 
   await screen.findByDisplayValue('simple-query')
 })
+test('filters alter generated query', async () => {
+  render(<LogsPreviewer projectRef="123" tableName={LogsTableName.EDGE} />)
+  userEvent.click(await screen.findByRole('button', { name: 'Status' }))
+  userEvent.click(await screen.findByText(/500 error codes/))
+  userEvent.click(await screen.findByText(/200 codes/))
+  userEvent.click(await screen.findByText(/Save/))
+
+  await waitFor(() => {
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('select'))
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('500'))
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('200'))
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('where'))
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('and'))
+  })
+})
+test('filters accept ', async () => {
+  render(
+    <LogsPreviewer
+      projectRef="123"
+      tableName={LogsTableName.FUNCTIONS}
+      override={{ key: 'mykey', value: 'myvalue' }}
+    />
+  )
+
+  await waitFor(() => {
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('mykey'))
+    expect(get).toHaveBeenCalledWith(expect.stringContaining('myvalue'))
+  })
+})
